@@ -11,10 +11,10 @@
     ],
     "autoload": {
         "psr-0": {
-            "PaulKatipunan": "src/"
+            "PaulKatipunan\\PasswordReset\\": "src/"
         },
         "files": [
-            "src/PaulKatipunan/helper.php"
+            "src/helpers.php"
         ]
     },
     "minimum-stability": "dev",
