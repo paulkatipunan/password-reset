@@ -9,6 +9,14 @@
             "email": "paul.katipunan13@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-0": {
+            "PaulKatipunan": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
     "minimum-stability": "dev",
     "require": {}
 }
