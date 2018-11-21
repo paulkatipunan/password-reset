@@ -18,6 +18,7 @@ class ServiceProvider extends BaseServiceProvider {
            _DIR_.'/../views' => resource_path('/views'),
         ],'views');
         
+        
     }
 
     /**
