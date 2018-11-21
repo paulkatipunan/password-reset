@@ -1,0 +1,14 @@
+{
+    "name": "paulkatipunan/password_reset",
+    "description": "reset password",
+    "type": "laravel",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Paul Adrian Katipunan",
+            "email": "paul.katipunan13@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
