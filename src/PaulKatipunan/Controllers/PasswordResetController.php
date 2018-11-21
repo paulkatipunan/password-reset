@@ -11,14 +11,14 @@ use Illuminate\Support\Facades\Mail;
 
 class PasswordResetController extends Controller
 {
-    public function create(Request $request)
+    public function create($email)
     {
 
         $request->validate([
             'email' => 'required|string|email',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $email)->first();
         
         if (!$user) {
 
@@ -27,6 +27,9 @@ class PasswordResetController extends Controller
             ], 404);
             
         } else {
+            
+            $passwordReset = PasswordReset::where('email', $user->email)->delete();
+
             $passwordReset = PasswordReset::updateOrCreate(
                 ['email' => $user->email],
                 [
@@ -37,10 +40,8 @@ class PasswordResetController extends Controller
         }  
 
         if ($user && $passwordReset) {
+
             $this->sendCredentials($user, $passwordReset);
-            // $user->notify(
-            //     new PasswordResetRequest($passwordReset->token)
-            // );
 
             return response()->json([
                 'message' => 'We have e-mailed your password reset link!'
@@ -52,21 +53,16 @@ class PasswordResetController extends Controller
 
     public function sendCredentials($user, $passwordReset)
     {
-        $emails = $user->email;
+
+        $email = $user->email;
+
         $url = url(route('find.token', $passwordReset->token));
-        Mail::send(('emails.password-reset'), ['project_title' => 'MPBL', 'first_name' => $user->first_name, 'last_name' => $user->last_name, 'email' => $user->email, 'newPassword' => $passwordReset->token, 'url' => $url], function ($message) use ($emails) {
+
+        Mail::send(('emails.reset-password'), ['user' => $user, 'url' => $url], function ($message) use ($email) {
            $message->to($emails);
            $message->subject("MPBL Reset Password");
        });
-    }
 
-     public function toMail($notifiable)
-     {
-        $url = route('find.token', $this->token);
-        return (new MailMessage)
-            ->line('You are receiving this email because we        received a password reset request for your account.')
-            ->action('Reset Password', url($url))
-            ->line('If you did not request a password reset, no further action is required.');
     }
 
 //--------------------------------------------------------------------------------------   
