@@ -30,8 +30,12 @@ Run the Artisan's command:
         php artisan vendor:publish --provider="PaulKatipunan\ServiceProvider" --tag="email-template"
 
 ```
-This will publish the email template of the password reset link. And you can modify it if you want.
+This will publish the email template of the password reset link. And you can modify it if you want. You can include the user details in the email.
+Example:
+```
+        {{$user->email}}, {{$user->name}}
 
+```
 
 
 
@@ -82,3 +86,4 @@ In your controller just the sendPasswordResetLink() helper, you need to pass the
 
   }
 ```
+
