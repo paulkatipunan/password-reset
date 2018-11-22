@@ -68,7 +68,8 @@ class PasswordResetController extends Controller
 
         Mail::send(('email.reset-password'), ['user' => $user, 'url' => $url], function ($message) use ($email) {
            $message->to($email);
-           $message->subject("Reset Password");
+           $message->subject(env('MAIL_SUBJECT'), "Reset Password");
+           $message->from(env('MAIL_FROM_EMAIL'));
         });
 
     }
@@ -158,7 +159,8 @@ class PasswordResetController extends Controller
         Mail::raw('Hello! Your password has been changed successfully! Thank you. ', 
         function ($message) use ($email) {
            $message->to($email);
-           $message->subject("Reset Password");
+           $message->subject(env('MAIL_SUBJECT'), "Reset Password");
+           $message->from(env('MAIL_FROM_EMAIL'));
         });
 
         
