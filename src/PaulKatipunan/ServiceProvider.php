@@ -1,6 +1,6 @@
 <?php 
 
-namespace PaulKatipunan\PasswordReset;
+namespace PaulKatipunan;
 
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
@@ -14,10 +14,16 @@ class ServiceProvider extends BaseServiceProvider {
     public function boot()
     {
 
+        include 'routes/api.php';
+
         $this->publishes([
-           _DIR_.'/../views' => resource_path('/views'),
-        ],'views');
+           __DIR__.'/views/email/reset-password.blade.php' => resource_path('/views/email/reset-password.blade.php'),
+        ],'email-template');
         
+        $this->publishes([
+           __DIR__.'/views/email/change-password.blade.php' => resource_path('/views/email/change-password.blade.php'),
+        ],'change-password-blade-file');
+
         
     }
 
@@ -29,6 +35,8 @@ class ServiceProvider extends BaseServiceProvider {
     public function register()
     {
        
+
+
     }
 
 }

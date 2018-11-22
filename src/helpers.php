@@ -12,7 +12,7 @@ if (!function_exists('sendPasswordResetLink')) {
      */
     function sendPasswordResetLink($email)
     {   
-        
+      
         return redirect()->route('request.email', $email);
 
     }

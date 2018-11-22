@@ -8,15 +8,24 @@ use Carbon\Carbon;
 use App\User;
 use PaulKatipunan\Models\PasswordReset;
 use Illuminate\Support\Facades\Mail;
+use Validator;
+use DB;
 
 class PasswordResetController extends Controller
 {
-    public function create($email)
+    public function create(Request $request, $email)
     {
+        $request = ['email' => $email];
 
-        $request->validate([
-            'email' => 'required|string|email',
-        ]);
+        $validator = Validator::make($request, [
+                'email' => 'required|string|email',
+            ]);
+
+        if ($validator->fails()) {
+
+            return response(['message' => 'Email Not Valid']);
+            
+        }
 
         $user = User::where('email', $email)->first();
         
@@ -30,13 +39,12 @@ class PasswordResetController extends Controller
             
             $passwordReset = PasswordReset::where('email', $user->email)->delete();
 
-            $passwordReset = PasswordReset::updateOrCreate(
-                ['email' => $user->email],
-                [
-                    'email' => $user->email,
-                    'token' => str_random(60)
-                 ]
-            );
+            $passwordReset = new PasswordReset;
+            $passwordReset->email = $user->email;
+            $passwordReset->token = str_random(60);
+            $passwordReset->created_at = Carbon::now()->toDateTimeString();
+            $passwordReset->save();
+           
         }  
 
         if ($user && $passwordReset) {
@@ -58,10 +66,10 @@ class PasswordResetController extends Controller
 
         $url = url(route('find.token', $passwordReset->token));
 
-        Mail::send(('emails.reset-password'), ['user' => $user, 'url' => $url], function ($message) use ($email) {
-           $message->to($emails);
-           $message->subject("MPBL Reset Password");
-       });
+        Mail::send(('email.reset-password'), ['user' => $user, 'url' => $url], function ($message) use ($email) {
+           $message->to($email);
+           $message->subject("Reset Password");
+        });
 
     }
 
@@ -73,27 +81,36 @@ class PasswordResetController extends Controller
         $passwordReset = PasswordReset::where('token', $token)
             ->first();
 
-        if (!$passwordReset)
-            die('This password reset link is invalid.');
-            // return response()->json([
-            //     'message' => 'This password reset token is invalid.'
-            // ], 404);
-
-        if (Carbon::parse($passwordReset->updated_at)->addMinutes(720)->isPast()) {
+        if (!$passwordReset) {
             
-            $passwordReset->delete();
-
-            die('This password reset link is invalid.');
-            // return response()->json([
-            //     'message' => 'This password reset token is invalid.'
-            // ], 404);
+            return response()->json([
+                'message' => 'This password reset Link is invalid.'
+            ], 404);
 
         }
 
-        // return response()->json($passwordReset);
+        if (Carbon::parse($passwordReset->created_at)->addMinutes(720)->isPast()) {
+            
+            $passwordReset->delete();
+
+            return response()->json([
+                'message' => 'This password reset Link is expired.'
+            ], 404);
+
+        }
+
         $data['passwordReset'] = $passwordReset;
 
-        return view('manager.reset-password', $data);
+        if(view()->exists('email.change-password')) {
+
+            return view('email.change-password', $data);
+
+        } else {
+
+            return response()->json($passwordReset);
+
+        }
+        
 
     }
 
@@ -108,49 +125,43 @@ class PasswordResetController extends Controller
             'token' => 'required|string'
         ]);
 
-        $passwordReset = PasswordReset::where([
-            ['token', $request->token],
-            ['email', $request->email]
-        ])->first();
+        $passwordReset = PasswordReset::where(
+            'email', $request->email
+        )->first();
 
-        if (!$passwordReset)
+        if (!$passwordReset) {
 
             return response()->json([
-                'message' => 'This password reset token is invalid.'
+                'message' => 'This password reset Link is invalid.'
             ], 404);
+        }
 
         $user = User::where('email', $passwordReset->email)->first();
 
-        if (!$user)
+        if (!$user) {
 
             return response()->json([
                 'message' => 'We cant find a user with that e-mail address.'
             ], 404);
+        }
 
         $user->password = bcrypt($request->password);
 
         $user->save();
-
-        $passwordReset->delete();
+        
+        DB::table('password_resets')->where('email', $request->email)->delete();
 
         $message = "Password Successfully Changed.";
-        $emails = $user->email;
-        Mail::raw('Hello!
 
-            Your password has been changed successfully! Thank you.
+        $email = $user->email;
 
-            Regards,
-            MPBL', function ($message) use ($emails) {
-           $message->to($emails);
-           $message->subject("Password Reset Success");
-       });
-        // $user->notify(new PasswordResetSuccess($passwordReset));
-        if (auth()->check()) {
-            $userName = '';
-        } else {
-            $userName = ucfirst($user->first_name). ' ' . ucfirst($user->last_name). ' ';
-        }
-        storeActivity("admin", "Change Password", $userName."Changed Password ". ' (' .$user->email . ')');
+        Mail::raw('Hello! Your password has been changed successfully! Thank you. ', 
+        function ($message) use ($email) {
+           $message->to($email);
+           $message->subject("Reset Password");
+        });
+
+        
         return response()->json($message);
 
     }
