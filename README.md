@@ -2,10 +2,6 @@
 
 Laravel password reset.
 
-```
-Give examples
-```
-
 ### Installing
 
 Install package using Composer:
